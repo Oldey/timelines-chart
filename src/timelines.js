@@ -148,7 +148,8 @@ export default Kapsule({
 
     // Callbacks
     onZoom: {}, // When user zooms in / resets zoom. Returns ([startX, endX], [startY, endY])
-    onLabelClick: {} // When user clicks on a group or y label. Returns (group) or (label, group) respectively
+    onLabelClick: {}, // When user clicks on a group or y label. Returns (group) or (label, group) respectively
+    onSegmentClick: {}
   },
 
   methods: {
@@ -869,6 +870,14 @@ export default Kapsule({
         .transition().duration(state.transDuration)
         .style('font-size', fontSize + 'px')
         .call(state.grpAxis);
+
+      // Make Segments clickable
+      if (state.onSegmentClick) {
+        state.svg.selectAll('rect.series-segment')
+          .on('click', function(d, a) {
+            console.log('onSegmentClicked', d, a);
+          });
+      }
 
       // Make Axises clickable
       if (state.onLabelClick) {
