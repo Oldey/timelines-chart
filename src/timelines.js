@@ -80,16 +80,20 @@ export default Kapsule({
 
             for (let j= 0, jlen=rawData[i].data.length; j<jlen; j++) {
               for (let k= 0, klen=rawData[i].data[j].data.length; k<klen; k++) {
-                state.completeFlatData.push({
+                const completeFlatDataItem = {
                   group: group,
                   label: rawData[i].data[j].label,
                   timeRange: (dateObjs
-                      ?rawData[i].data[j].data[k].timeRange
-                      :[new Date(rawData[i].data[j].data[k].timeRange[0]), new Date(rawData[i].data[j].data[k].timeRange[1])]
+                    ?rawData[i].data[j].data[k].timeRange
+                    :[new Date(rawData[i].data[j].data[k].timeRange[0]), new Date(rawData[i].data[j].data[k].timeRange[1])]
                   ),
                   val: rawData[i].data[j].data[k].val,
                   labelVal: rawData[i].data[j].data[k][rawData[i].data[j].data[k].hasOwnProperty('labelVal')?'labelVal':'val']
-                });
+                };
+                for (let l = 0, llen = state.additionalProperties.length; l < llen; l++) {
+                  completeFlatDataItem[state.additionalProperties[l]] = rawData[i].data[j].data[k][state.additionalProperties[l]]
+                }
+                state.completeFlatData.push(completeFlatDataItem);
               }
               state.totalNLines++;
             }
@@ -102,8 +106,8 @@ export default Kapsule({
     maxLineHeight: { default: 12 },
     leftMargin: { default: 90 },
     rightMargin: { default: 100 },
-    topMargin: {default: 26 },
-    bottomMargin: {default: 30 },
+    topMargin: { default: 26 },
+    bottomMargin: { default: 30 },
     useUtc: { default: false },
     xTickFormat: {},
     timeFormat: { default: '%Y-%m-%d %-I:%M:%S %p', triggerUpdate: false },
@@ -145,6 +149,7 @@ export default Kapsule({
         state.transDuration = val?700:0;
       }
     },
+    additionalProperties: { default: [] },
 
     // Callbacks
     onZoom: {}, // When user zooms in / resets zoom. Returns ([startX, endX], [startY, endY])
@@ -876,6 +881,7 @@ export default Kapsule({
         state.svg.selectAll('rect.series-segment')
           .on('click', function(d, a) {
             console.log('onSegmentClicked', d, a);
+            state.onSegmentClick(d);
           });
       }
 
