@@ -40,6 +40,11 @@ import { fitToBox as TextFitToBox } from 'svg-text-fit';
 import ColorLegend from 'd3-color-legend';
 import TimeOverview from './time-overview.js';
 import { alphaNumCmp } from './comparison.js';
+import {
+  multiFormat as ruMultiFormat,
+  labels as ruLabels,
+  timeFormat as ruTimeFormat
+} from './locales/ruLocale.js';
 
 export default Kapsule({
   props: {
@@ -103,12 +108,27 @@ export default Kapsule({
     },
     width: { default: window.innerWidth },
     maxHeight: { default: 640 },
-    maxLineHeight: { default: 12 },
+    maxLineHeight: { default: 40 },
     leftMargin: { default: 90 },
     rightMargin: { default: 100 },
     topMargin: { default: 26 },
     bottomMargin: { default: 30 },
     useUtc: { default: false },
+    labels: { default: {
+      from: 'From',
+      to: 'To',
+      resetZoom: 'Reset Zoom'
+    } },
+    locale: {
+      onChange(locale, state) {
+        if (locale === 'RU') {
+          state.xTickFormat = ruMultiFormat;
+          state.labels = ruLabels;
+          state.resetBtn.text(ruLabels.resetZoom);
+          state.timeFormat = ruTimeFormat;
+        }
+      }
+    },
     xTickFormat: {},
     timeFormat: { default: '%Y-%m-%d %-I:%M:%S %p', triggerUpdate: false },
     zoomX: {  // Which time-range to show (null = min/max)
@@ -135,7 +155,7 @@ export default Kapsule({
     },
     minSegmentDuration: {},
     zColorScale: { default: d3ScaleSequential(interpolateRdYlBu) },
-    zQualitative: { default: false, onChange(discrete, state) {
+    zQualitative: { default: true, onChange(discrete, state) {
       state.zColorScale = discrete
         ? d3ScaleOrdinal([...schemeCategory10, ...schemeSet3])
         : d3ScaleSequential(interpolateRdYlBu); // alt: d3.interpolateInferno
@@ -493,10 +513,10 @@ export default Kapsule({
         .html(d => {
           const normVal = state.zColorScale.domain()[state.zColorScale.domain().length-1] - state.zColorScale.domain()[0];
           const dateFormat = (state.useUtc ? d3UtcFormat : d3TimeFormat)(`${state.timeFormat}${state.useUtc?' (UTC)':''}`);
-          return '<strong>' + d.labelVal + ' </strong>' + state.zDataLabel
-            + (normVal?' (<strong>' + Math.round((d.val-state.zColorScale.domain()[0])/normVal*100*100)/100 + '%</strong>)':'') + '<br>'
-            + '<strong>From: </strong>' + dateFormat(d.timeRange[0]) + '<br>'
-            + '<strong>To: </strong>' + dateFormat(d.timeRange[1]);
+          return `<strong>${d.labelVal} </strong>${state.zDataLabel}
+            ${normVal?` (<strong>${Math.round((d.val-state.zColorScale.domain()[0])/normVal*100*100)/100}%</strong>)`:''}<br>
+            <strong>${state.labels.from}: </strong>${dateFormat(d.timeRange[0])}<br>
+            <strong>${state.labels.to}: </strong>${dateFormat(d.timeRange[1])}`;
         });
 
       state.svg.call(state.segmentTooltip);
@@ -576,7 +596,7 @@ export default Kapsule({
 
       state.resetBtn = state.svg.append('text')
         .attr('class', 'reset-zoom-btn')
-        .text('Reset Zoom')
+        .text(state.labels.resetZoom)
         .style('text-anchor', 'end')
         .on('mouseup' , function() {
           state.svg.dispatch('resetZoom');

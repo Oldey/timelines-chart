@@ -23198,6 +23198,36 @@ function alphaNumCmp(a, b) {
   return 0;
 }
 
+var ruLocale = formatLocale$1({
+  dateTime: '%A, %e %B %Y г. %X',
+  date: '%d.%m.%Y',
+  time: '%H:%M:%S',
+  periods: ['AM', 'PM'],
+  days: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+  shortDays: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'],
+  months: ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'],
+  shortMonths: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+});
+var formatMillisecond = ruLocale.format(".%L"),
+    formatSecond = ruLocale.format(":%S"),
+    formatMinute = ruLocale.format("%-H:%M"),
+    formatHour = ruLocale.format("%-H"),
+    formatDay = ruLocale.format("%a %d"),
+    formatWeek = ruLocale.format("%b %d"),
+    formatMonth = ruLocale.format("%B"),
+    formatYear$1 = ruLocale.format("%Y");
+function multiFormat(date) {
+  return (second(date) < date ? formatMillisecond : minute(date) < date ? formatSecond : hour(date) < date ? formatMinute : day(date) < date ? formatHour : month(date) < date ? sunday(date) < date ? formatDay : formatWeek : year(date) < date ? formatMonth : formatYear$1)(date);
+}
+
+var labels = {
+  from: 'С',
+  to: 'По',
+  resetZoom: 'Сбросить масштаб'
+};
+
+var timeFormat$1 = '%d.%m.%Y %-H:%M';
+
 var timelines = Kapsule({
   props: {
     data: {
@@ -23258,12 +23288,27 @@ var timelines = Kapsule({
     },
     width: { default: window.innerWidth },
     maxHeight: { default: 640 },
-    maxLineHeight: { default: 12 },
+    maxLineHeight: { default: 40 },
     leftMargin: { default: 90 },
     rightMargin: { default: 100 },
     topMargin: { default: 26 },
     bottomMargin: { default: 30 },
     useUtc: { default: false },
+    labels: { default: {
+        from: 'From',
+        to: 'To',
+        resetZoom: 'Reset Zoom'
+      } },
+    locale: {
+      onChange: function onChange(locale, state) {
+        if (locale === 'RU') {
+          state.xTickFormat = multiFormat;
+          state.labels = labels;
+          state.resetBtn.text(labels.resetZoom);
+          state.timeFormat = timeFormat$1;
+        }
+      }
+    },
     xTickFormat: {},
     timeFormat: { default: '%Y-%m-%d %-I:%M:%S %p', triggerUpdate: false },
     zoomX: { // Which time-range to show (null = min/max)
@@ -23288,7 +23333,7 @@ var timelines = Kapsule({
     },
     minSegmentDuration: {},
     zColorScale: { default: sequential(interpolateRdYlBu) },
-    zQualitative: { default: false, onChange: function onChange(discrete, state) {
+    zQualitative: { default: true, onChange: function onChange(discrete, state) {
         state.zColorScale = discrete ? ordinal([].concat(toConsumableArray$1(schemeCategory10), toConsumableArray$1(schemeSet3))) : sequential(interpolateRdYlBu); // alt: d3.interpolateInferno
       }
     },
@@ -23652,7 +23697,7 @@ var timelines = Kapsule({
       state.segmentTooltip = d3Tip().attr('class', 'chart-tooltip segment-tooltip').direction('s').offset([5, 0]).html(function (d) {
         var normVal = state.zColorScale.domain()[state.zColorScale.domain().length - 1] - state.zColorScale.domain()[0];
         var dateFormat = (state.useUtc ? utcFormat : timeFormat)('' + state.timeFormat + (state.useUtc ? ' (UTC)' : ''));
-        return '<strong>' + d.labelVal + ' </strong>' + state.zDataLabel + (normVal ? ' (<strong>' + Math.round((d.val - state.zColorScale.domain()[0]) / normVal * 100 * 100) / 100 + '%</strong>)' : '') + '<br>' + '<strong>From: </strong>' + dateFormat(d.timeRange[0]) + '<br>' + '<strong>To: </strong>' + dateFormat(d.timeRange[1]);
+        return '<strong>' + d.labelVal + ' </strong>' + state.zDataLabel + '\n            ' + (normVal ? ' (<strong>' + Math.round((d.val - state.zColorScale.domain()[0]) / normVal * 100 * 100) / 100 + '%</strong>)' : '') + '<br>\n            <strong>' + state.labels.from + ': </strong>' + dateFormat(d.timeRange[0]) + '<br>\n            <strong>' + state.labels.to + ': </strong>' + dateFormat(d.timeRange[1]);
       });
 
       state.svg.call(state.segmentTooltip);
@@ -23714,7 +23759,7 @@ var timelines = Kapsule({
         event.stopPropagation();
       });
 
-      state.resetBtn = state.svg.append('text').attr('class', 'reset-zoom-btn').text('Reset Zoom').style('text-anchor', 'end').on('mouseup', function () {
+      state.resetBtn = state.svg.append('text').attr('class', 'reset-zoom-btn').text(state.labels.resetZoom).style('text-anchor', 'end').on('mouseup', function () {
         state.svg.dispatch('resetZoom');
       }).on('mouseover', function () {
         d3Select(this).style('opacity', 1);
@@ -23907,10 +23952,10 @@ var timelines = Kapsule({
     }
 
     function adjustYScale() {
-      var labels = [];
+      var labels$$1 = [];
 
       var _loop4 = function _loop4(i, len) {
-        labels = labels.concat(state.structData[i].lines.map(function (d) {
+        labels$$1 = labels$$1.concat(state.structData[i].lines.map(function (d) {
           return state.structData[i].group + '+&+' + d;
         }));
       };
@@ -23919,8 +23964,8 @@ var timelines = Kapsule({
         _loop4(i, len);
       }
 
-      state.yScale.domain(labels);
-      state.yScale.range([state.graphH / labels.length * 0.5, state.graphH * (1 - 0.5 / labels.length)]);
+      state.yScale.domain(labels$$1);
+      state.yScale.range([state.graphH / labels$$1.length * 0.5, state.graphH * (1 - 0.5 / labels$$1.length)]);
     }
 
     function adjustGrpScale() {
