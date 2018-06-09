@@ -227,6 +227,7 @@ var timelines = Kapsule({
         }
       }
     },
+    yAxisConfig: { default: { groups: true, labels: true } },
     width: { default: window.innerWidth },
     maxHeight: { default: 640 },
     maxLineHeight: { default: 40 },
@@ -954,32 +955,37 @@ var timelines = Kapsule({
       state.xGrid.tickSize(state.graphH);
       state.svg.select('g.x-grid').attr('transform', 'translate(0,' + state.graphH + ')').transition().duration(state.transDuration).call(state.xGrid);
 
-      // Y
       var fontVerticalMargin = 0.6;
-      var labelDisplayRatio = Math.ceil(state.nLines * state.minLabelFont / Math.sqrt(2) / state.graphH / fontVerticalMargin);
-      var tickVals = state.yScale.domain().filter(function (d, i) {
-        return !(i % labelDisplayRatio);
-      });
-      var fontSize = Math.min(12, state.graphH / tickVals.length * fontVerticalMargin * Math.sqrt(2));
-      var maxChars = Math.ceil(state.rightMargin / (fontSize / Math.sqrt(2)));
 
-      state.yAxis.tickValues(tickVals);
-      state.yAxis.tickFormat(function (d) {
-        return reduceLabel(d.split('+&+')[1], maxChars);
-      });
-      state.svg.select('g.y-axis').transition().duration(state.transDuration).attr('transform', 'translate(' + state.graphW + ', 0)').style('font-size', fontSize + 'px').call(state.yAxis);
+      // Y
+      if (state.yAxisConfig.labels) {
+        var labelDisplayRatio = Math.ceil(state.nLines * state.minLabelFont / Math.sqrt(2) / state.graphH / fontVerticalMargin);
+        var tickVals = state.yScale.domain().filter(function (d, i) {
+          return !(i % labelDisplayRatio);
+        });
+        var fontSize = Math.min(12, state.graphH / tickVals.length * fontVerticalMargin * Math.sqrt(2));
+        var maxChars = Math.ceil(state.rightMargin / (fontSize / Math.sqrt(2)));
+
+        state.yAxis.tickValues(tickVals);
+        state.yAxis.tickFormat(function (d) {
+          return reduceLabel(d.split('+&+')[1], maxChars);
+        });
+        state.svg.select('g.y-axis').transition().duration(state.transDuration).attr('transform', 'translate(' + state.graphW + ', 0)').style('font-size', fontSize + 'px').call(state.yAxis);
+      }
 
       // Grp
-      var minHeight = min(state.grpScale.range(), function (d, i) {
-        return i > 0 ? d - state.grpScale.range()[i - 1] : d * 2;
-      });
-      fontSize = Math.min(14, minHeight * fontVerticalMargin * Math.sqrt(2));
-      maxChars = Math.floor(state.leftMargin / (fontSize / Math.sqrt(2)));
+      if (state.yAxisConfig.groups) {
+        var minHeight = min(state.grpScale.range(), function (d, i) {
+          return i > 0 ? d - state.grpScale.range()[i - 1] : d * 2;
+        });
+        var _fontSize = Math.min(14, minHeight * fontVerticalMargin * Math.sqrt(2));
+        var _maxChars = Math.floor(state.leftMargin / (_fontSize / Math.sqrt(2)));
 
-      state.grpAxis.tickFormat(function (d) {
-        return reduceLabel(d, maxChars);
-      });
-      state.svg.select('g.grp-axis').transition().duration(state.transDuration).style('font-size', fontSize + 'px').call(state.grpAxis);
+        state.grpAxis.tickFormat(function (d) {
+          return reduceLabel(d, _maxChars);
+        });
+        state.svg.select('g.grp-axis').transition().duration(state.transDuration).style('font-size', _fontSize + 'px').call(state.grpAxis);
+      }
 
       // Make Segments clickable
       if (state.onSegmentClick) {
@@ -1012,7 +1018,11 @@ var timelines = Kapsule({
 
       groups.exit().transition().duration(state.transDuration).style('stroke-opacity', 0).style('fill-opacity', 0).remove();
 
-      var newGroups = groups.enter().append('rect').attr('class', 'series-group').attr('x', 0).attr('y', 0).attr('height', 0).style('fill', 'url(#' + state.groupGradId + ')').on('mouseover', state.groupTooltip.show).on('mouseout', state.groupTooltip.hide);
+      var newGroups = groups.enter().append('rect').attr('class', 'series-group').attr('x', 0).attr('y', 0).attr('height', 0).style('fill', 'url(#' + state.groupGradId + ')');
+
+      if (state.yAxisConfig.groups) {
+        newGroups.on('mouseover', state.groupTooltip.show).on('mouseout', state.groupTooltip.hide);
+      }
 
       newGroups.append('title').text('click-drag to zoom in');
 
@@ -1045,7 +1055,15 @@ var timelines = Kapsule({
 
       var newSegments = timelines.enter().append('rect').attr('class', 'series-segment').attr('rx', 1).attr('ry', 1).attr('x', state.graphW / 2).attr('y', state.graphH / 2).attr('width', 0).attr('height', 0).style('fill', function (d) {
         return state.zColorScale(d.val);
-      }).style('fill-opacity', 0).on('mouseover.groupTooltip', state.groupTooltip.show).on('mouseout.groupTooltip', state.groupTooltip.hide).on('mouseover.lineTooltip', state.lineTooltip.show).on('mouseout.lineTooltip', state.lineTooltip.hide).on('mouseover.segmentTooltip', state.segmentTooltip.show).on('mouseout.segmentTooltip', state.segmentTooltip.hide);
+      }).style('fill-opacity', 0).on('mouseover.segmentTooltip', state.segmentTooltip.show).on('mouseout.segmentTooltip', state.segmentTooltip.hide);
+
+      if (state.yAxisConfig.groups) {
+        newSegments.on('mouseover.groupTooltip', state.groupTooltip.show).on('mouseout.groupTooltip', state.groupTooltip.hide);
+      }
+
+      if (state.yAxisConfig.labels) {
+        newSegments.on('mouseover.lineTooltip', state.lineTooltip.show).on('mouseout.lineTooltip', state.lineTooltip.hide);
+      }
 
       newSegments.on('mouseover', function () {
         if ('disableHover' in state && state.disableHover) return;

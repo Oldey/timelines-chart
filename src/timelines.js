@@ -106,6 +106,7 @@ export default Kapsule({
         }
       }
     },
+    yAxisConfig: { default: { groups: true, labels: true } },
     width: { default: window.innerWidth },
     maxHeight: { default: 640 },
     maxLineHeight: { default: 40 },
@@ -419,8 +420,8 @@ export default Kapsule({
       // Applies to ordinal scales (invert not supported in d3)
       function invertOrdinal(val, cmpFunc) {
         cmpFunc = cmpFunc || function (a, b) {
-            return (a >= b);
-          };
+          return (a >= b);
+        };
 
         const scDomain = this.domain();
         let scRange = this.range();
@@ -716,8 +717,7 @@ export default Kapsule({
           validLines = state.completeStructData[i].lines
             .filter(d => state.flatData.some(dd =>
               dd.group == state.completeStructData[i].group && dd.label == d
-            )
-          );
+            ));
         }
 
         if (cntDwn[0]>=validLines.length) { // Ignore whole group (before start)
@@ -811,7 +811,7 @@ export default Kapsule({
     function adjustLegend() {
       state.svg.select('.legendG')
         .transition().duration(state.transDuration)
-          .attr('transform', `translate(${state.leftMargin + state.graphW*0.05},2)`);
+        .attr('transform', `translate(${state.leftMargin + state.graphW*0.05},2)`);
 
       state.colorLegend
         .width(Math.max(120, state.graphW/3 * (state.zQualitative?2:1)))
@@ -821,8 +821,8 @@ export default Kapsule({
 
       state.resetBtn
         .transition().duration(state.transDuration)
-          .attr('x', state.leftMargin + state.graphW*.99)
-          .attr('y', state.topMargin *.8);
+        .attr('x', state.leftMargin + state.graphW*.99)
+        .attr('y', state.topMargin *.8);
 
       TextFitToBox()
         .bbox({
@@ -852,9 +852,9 @@ export default Kapsule({
         .style('fill-opacity', 0)
         .attr('transform', 'translate(0,' + state.graphH + ')')
         .transition().duration(state.transDuration)
-          .call(state.xAxis)
-          .style('stroke-opacity', 1)
-          .style('fill-opacity', 1);
+        .call(state.xAxis)
+        .style('stroke-opacity', 1)
+        .style('fill-opacity', 1);
 
       /* Angled x axis labels
        state.svg.select('g.x-axis').selectAll('text')
@@ -868,33 +868,38 @@ export default Kapsule({
         .transition().duration(state.transDuration)
         .call(state.xGrid);
 
-      // Y
       const fontVerticalMargin = 0.6;
-      const labelDisplayRatio = Math.ceil(state.nLines*state.minLabelFont/Math.sqrt(2)/state.graphH/fontVerticalMargin);
-      const tickVals = state.yScale.domain().filter((d, i) => !(i % labelDisplayRatio));
-      let fontSize = Math.min(12, state.graphH/tickVals.length*fontVerticalMargin*Math.sqrt(2));
-      let maxChars = Math.ceil(state.rightMargin/(fontSize/Math.sqrt(2)));
 
-      state.yAxis.tickValues(tickVals);
-      state.yAxis.tickFormat(d => reduceLabel(d.split('+&+')[1], maxChars));
-      state.svg.select('g.y-axis')
-        .transition().duration(state.transDuration)
+      // Y
+      if (state.yAxisConfig.labels) {
+        const labelDisplayRatio = Math.ceil(state.nLines*state.minLabelFont/Math.sqrt(2)/state.graphH/fontVerticalMargin);
+        const tickVals = state.yScale.domain().filter((d, i) => !(i % labelDisplayRatio));
+        const fontSize = Math.min(12, state.graphH/tickVals.length*fontVerticalMargin*Math.sqrt(2));
+        const maxChars = Math.ceil(state.rightMargin/(fontSize/Math.sqrt(2)));
+
+        state.yAxis.tickValues(tickVals);
+        state.yAxis.tickFormat(d => reduceLabel(d.split('+&+')[1], maxChars));
+        state.svg.select('g.y-axis')
+          .transition().duration(state.transDuration)
           .attr('transform', 'translate(' + state.graphW + ', 0)')
           .style('font-size', fontSize + 'px')
           .call(state.yAxis);
+      }
 
       // Grp
-      const minHeight = d3Min(state.grpScale.range(), function (d,i) {
-        return i>0?d-state.grpScale.range()[i-1]:d*2;
-      });
-      fontSize = Math.min(14, minHeight*fontVerticalMargin*Math.sqrt(2));
-      maxChars = Math.floor(state.leftMargin/(fontSize/Math.sqrt(2)));
+      if (state.yAxisConfig.groups) {
+        const minHeight = d3Min(state.grpScale.range(), function (d,i) {
+          return i>0?d-state.grpScale.range()[i-1]:d*2;
+        });
+        const fontSize = Math.min(14, minHeight*fontVerticalMargin*Math.sqrt(2));
+        const maxChars = Math.floor(state.leftMargin/(fontSize/Math.sqrt(2)));
 
-      state.grpAxis.tickFormat(d => reduceLabel(d, maxChars));
-      state.svg.select('g.grp-axis')
-        .transition().duration(state.transDuration)
-        .style('font-size', fontSize + 'px')
-        .call(state.grpAxis);
+        state.grpAxis.tickFormat(d => reduceLabel(d, maxChars));
+        state.svg.select('g.grp-axis')
+          .transition().duration(state.transDuration)
+          .style('font-size', fontSize + 'px')
+          .call(state.grpAxis);
+      }
 
       // Make Segments clickable
       if (state.onSegmentClick) {
@@ -921,8 +926,8 @@ export default Kapsule({
         return label.length<=maxChars?label:(
           label.substring(0, maxChars*2/3)
           + '...'
-          + label.substring(label.length - maxChars/3, label.length
-        ));
+          + label.substring(label.length - maxChars/3, label.length)
+        );
       }
     }
 
@@ -941,9 +946,13 @@ export default Kapsule({
         .attr('x', 0)
         .attr('y', 0)
         .attr('height', 0)
-        .style('fill', 'url(#' + state.groupGradId + ')')
-        .on('mouseover', state.groupTooltip.show)
-        .on('mouseout', state.groupTooltip.hide);
+        .style('fill', 'url(#' + state.groupGradId + ')');
+
+      if (state.yAxisConfig.groups) {
+        newGroups
+          .on('mouseover', state.groupTooltip.show)
+          .on('mouseout', state.groupTooltip.hide);
+      }
 
       newGroups.append('title')
         .text('click-drag to zoom in');
@@ -995,12 +1004,20 @@ export default Kapsule({
         .attr('height', 0)
         .style('fill', d => state.zColorScale(d.val))
         .style('fill-opacity', 0)
-        .on('mouseover.groupTooltip', state.groupTooltip.show)
-        .on('mouseout.groupTooltip', state.groupTooltip.hide)
-        .on('mouseover.lineTooltip', state.lineTooltip.show)
-        .on('mouseout.lineTooltip', state.lineTooltip.hide)
         .on('mouseover.segmentTooltip', state.segmentTooltip.show)
         .on('mouseout.segmentTooltip', state.segmentTooltip.hide);
+
+      if (state.yAxisConfig.groups) {
+        newSegments
+          .on('mouseover.groupTooltip', state.groupTooltip.show)
+          .on('mouseout.groupTooltip', state.groupTooltip.hide);
+      }
+
+      if (state.yAxisConfig.labels) {
+        newSegments
+          .on('mouseover.lineTooltip', state.lineTooltip.show)
+          .on('mouseout.lineTooltip', state.lineTooltip.hide);
+      }
 
       newSegments
         .on('mouseover', function() {
