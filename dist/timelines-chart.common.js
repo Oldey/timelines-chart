@@ -3,18 +3,38 @@
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var Kapsule = _interopDefault(require('kapsule'));
-var d3Brush = require('d3-brush');
+var d3Array = require('d3-array');
 var d3Axis = require('d3-axis');
+var d3Scale = require('d3-scale');
 var d3Selection = require('d3-selection');
 var d3TimeFormat = require('d3-time-format');
-var d3Time = require('d3-time');
-var d3Array = require('d3-array');
-var d3Scale = require('d3-scale');
 var d3Tip = _interopDefault(require('d3-tip'));
 var d3ScaleChromatic = require('d3-scale-chromatic');
 var svgUtils = require('svg-utils');
 var svgTextFit = require('svg-text-fit');
 var ColorLegend = _interopDefault(require('d3-color-legend'));
+var d3Brush = require('d3-brush');
+var d3Time = require('d3-time');
+
+function _toConsumableArray(arr) {
+  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+}
+
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+}
+
+function _iterableToArray(iter) {
+  if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+}
+
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance");
+}
 
 function styleInject(css, ref) {
   if (ref === void 0) ref = {};
@@ -45,47 +65,42 @@ function styleInject(css, ref) {
   }
 }
 
-var css = ".timelines-chart {\n\n  text-align: center;\n\n  /* Cancel selection interaction */\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  -khtml-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n}\n\n  .timelines-chart .axises line, .timelines-chart .axises path {\n      stroke: #808080;\n    }\n\n  .timelines-chart .axises .x-axis {\n      font: 12px sans-serif;\n    }\n\n  .timelines-chart .axises .x-grid line {\n      stroke: #D3D3D3;\n    }\n\n  .timelines-chart .axises .y-axis line, .timelines-chart .axises .y-axis path, .timelines-chart .axises .grp-axis line, .timelines-chart .axises .grp-axis path {\n        stroke: none;\n      }\n\n  .timelines-chart .axises .y-axis text, .timelines-chart .axises .grp-axis text {\n        fill: #2F4F4F;\n      }\n\n  .timelines-chart .series-group {\n    fill-opacity: 0.6;\n    stroke: #808080;\n    stroke-opacity: 0.2;\n  }\n\n  .timelines-chart .series-segment {\n    stroke: none;\n  }\n\n  .timelines-chart .series-group, .timelines-chart .series-segment {\n    cursor: crosshair;\n  }\n\n  .timelines-chart .legend {\n    font-family: Sans-Serif;\n  }\n\n  .timelines-chart .legend .legendText {\n      fill: #666;\n    }\n\n  .timelines-chart .reset-zoom-btn {\n    font-family: sans-serif;\n    fill: blue;\n    opacity: .6;\n    cursor: pointer;\n  }\n\n.brusher .grid-background {\n    fill: lightgrey;\n  }\n\n.brusher .axis path {\n    display: none;\n  }\n\n.brusher .tick text {\n    text-anchor: middle;\n  }\n\n.brusher .grid line, .brusher .grid path {\n      stroke: #fff;\n    }\n\n.chart-zoom-selection, .brusher .brush .selection {\n  stroke: blue;\n  stroke-opacity: 0.6;\n  fill: blue;\n  fill-opacity: 0.3;\n  shape-rendering: crispEdges;\n}\n\n.chart-tooltip {\n  color: #eee;\n  background: rgba(0,0,140,0.85);\n  padding: 5px;\n  border-radius: 3px;\n  font: 11px sans-serif;\n  z-index: 4000;\n}\n\n.chart-tooltip.group-tooltip {\n    font-size: 14px;\n  }\n\n.chart-tooltip.line-tooltip {\n    font-size: 13px;\n  }\n\n.chart-tooltip.group-tooltip, .chart-tooltip.line-tooltip {\n    font-weight: bold;\n  }\n\n.chart-tooltip.segment-tooltip {\n     text-align: center;\n  }";
+var css = ".timelines-chart {\r\n\r\n  text-align: center;\r\n\r\n  /* Cancel selection interaction */\r\n  -webkit-touch-callout: none;\r\n  -webkit-user-select: none;\r\n  -khtml-user-select: none;\r\n  -moz-user-select: none;\r\n  -ms-user-select: none;\r\n  user-select: none;\r\n}\r\n\r\n  .timelines-chart .axises line, .timelines-chart .axises path {\r\n      stroke: #808080;\r\n    }\r\n\r\n  .timelines-chart .axises .x-axis {\r\n      font: 12px sans-serif;\r\n    }\r\n\r\n  .timelines-chart .axises .x-grid line {\r\n      stroke: #D3D3D3;\r\n    }\r\n\r\n  .timelines-chart .axises .y-axis line, .timelines-chart .axises .y-axis path, .timelines-chart .axises .grp-axis line, .timelines-chart .axises .grp-axis path {\r\n        stroke: none;\r\n      }\r\n\r\n  .timelines-chart .axises .y-axis text, .timelines-chart .axises .grp-axis text {\r\n        fill: #2F4F4F;\r\n      }\r\n\r\n  .timelines-chart line.x-axis-date-marker {\r\n    stroke-width: 1;\r\n    stroke: #293cb7;\r\n    fill: \"none\";\r\n  }\r\n\r\n  .timelines-chart .series-group {\r\n    fill-opacity: 0.6;\r\n    stroke: #808080;\r\n    stroke-opacity: 0.2;\r\n  }\r\n\r\n  .timelines-chart .series-segment {\r\n    stroke: none;\r\n  }\r\n\r\n  .timelines-chart .series-group, .timelines-chart .series-segment {\r\n    cursor: crosshair;\r\n  }\r\n\r\n  .timelines-chart .legend {\r\n    font-family: Sans-Serif;\r\n  }\r\n\r\n  .timelines-chart .legend .legendText {\r\n      fill: #666;\r\n    }\r\n\r\n  .timelines-chart .reset-zoom-btn {\r\n    font-family: sans-serif;\r\n    fill: blue;\r\n    opacity: .6;\r\n    cursor: pointer;\r\n  }\r\n\r\n.brusher .grid-background {\r\n    fill: lightgrey;\r\n  }\r\n\r\n.brusher .axis path {\r\n    display: none;\r\n  }\r\n\r\n.brusher .tick text {\r\n    text-anchor: middle;\r\n  }\r\n\r\n.brusher .grid line, .brusher .grid path {\r\n      stroke: #fff;\r\n    }\r\n\r\n.chart-zoom-selection, .brusher .brush .selection {\r\n  stroke: blue;\r\n  stroke-opacity: 0.6;\r\n  fill: blue;\r\n  fill-opacity: 0.3;\r\n  shape-rendering: crispEdges;\r\n}\r\n\r\n.chart-tooltip {\r\n  color: #eee;\r\n  background: rgba(0,0,140,0.85);\r\n  padding: 5px;\r\n  border-radius: 3px;\r\n  font: 11px sans-serif;\r\n  z-index: 4000;\r\n}\r\n\r\n.chart-tooltip.group-tooltip {\r\n    font-size: 14px;\r\n  }\r\n\r\n.chart-tooltip.line-tooltip {\r\n    font-size: 13px;\r\n  }\r\n\r\n.chart-tooltip.group-tooltip, .chart-tooltip.line-tooltip {\r\n    font-weight: bold;\r\n  }\r\n\r\n.chart-tooltip.segment-tooltip {\r\n     text-align: center;\r\n  }";
 styleInject(css);
-
-var toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr);
-  }
-};
-
-/**
- * Based on http://bl.ocks.org/mbostock/6232620
- */
 
 var TimeOverview = Kapsule({
   props: {
-    width: { default: 300 },
-    height: { default: 20 },
-    margins: { default: { top: 0, right: 0, bottom: 20, left: 0 } },
+    width: {
+      "default": 300
+    },
+    height: {
+      "default": 20
+    },
+    margins: {
+      "default": {
+        top: 0,
+        right: 0,
+        bottom: 20,
+        left: 0
+      }
+    },
     scale: {},
     domainRange: {},
     currentSelection: {},
     tickFormat: {},
-    onChange: { default: function _default(selectionStart, selectionEnd) {} }
+    onChange: {
+      "default": function _default(selectionStart, selectionEnd) {}
+    }
   },
   init: function init(el, state) {
     state.xGrid = d3Axis.axisBottom().tickFormat('');
-
     state.xAxis = d3Axis.axisBottom().tickPadding(0);
-
-    state.brush = d3Brush.brushX().on('end', function () {
+    state.brush = d3Brush.brushX().handleSize(24).on('end', function () {
       if (!d3Selection.event.sourceEvent) return;
-
       var selection = d3Selection.event.selection ? d3Selection.event.selection.map(state.scale.invert) : state.scale.domain();
-      state.onChange.apply(state, toConsumableArray(selection));
-    });
+      state.onChange.apply(state, _toConsumableArray(selection));
+    }); // Build dom
 
-    // Build dom
     state.svg = d3Selection.select(el).append('svg').attr('class', 'brusher');
     var brusher = state.svg.append('g').attr('class', 'brusher-margins');
     brusher.append('rect').attr('class', 'grid-background');
@@ -95,34 +110,25 @@ var TimeOverview = Kapsule({
   },
   update: function update(state) {
     if (state.domainRange[1] <= state.domainRange[0]) return;
-
     var brushWidth = state.width - state.margins.left - state.margins.right,
         brushHeight = state.height - state.margins.top - state.margins.bottom;
-
     state.scale.domain(state.domainRange).range([0, brushWidth]);
-
     state.xAxis.scale(state.scale).tickFormat(state.tickFormat);
     state.xGrid.scale(state.scale).tickSize(-brushHeight);
-
     state.svg.attr('width', state.width).attr('height', state.height);
-
-    state.svg.select('.brusher-margins').attr('transform', 'translate(' + state.margins.left + ',' + state.margins.top + ')');
-
+    state.svg.select('.brusher-margins').attr('transform', "translate(".concat(state.margins.left, ",").concat(state.margins.top, ")"));
     state.svg.select('.grid-background').attr('width', brushWidth).attr('height', brushHeight);
-
     state.svg.select('.x.grid').attr('transform', 'translate(0,' + brushHeight + ')').call(state.xGrid);
-
     state.svg.select('.x.axis').attr("transform", "translate(0," + brushHeight + ")").call(state.xAxis).selectAll('text').attr('y', 8);
-
-    state.svg.select('.brush').call(state.brush.extent([[0, 0], [brushWidth, brushHeight]])).call(state.brush.move, state.currentSelection.map(state.scale)).selectAll('rect').attr('height', brushHeight);
+    state.svg.select('.brush').call(state.brush.extent([[0, 0], [brushWidth, brushHeight]])).call(state.brush.move, state.currentSelection.map(state.scale));
   }
 });
 
 function alphaNumCmp(a, b) {
-  var alist = a.split(/(\d+)/),
-      blist = b.split(/(\d+)/);
-
+  var alist = a.split('(\d+)'),
+      blist = b.split('(\d+)');
   alist.length && alist[alist.length - 1] == '' ? alist.pop() : null; // remove the last element if empty
+
   blist.length && blist[blist.length - 1] == '' ? blist.pop() : null; // remove the last element if empty
 
   for (var i = 0, len = Math.max(alist.length, blist.length); i < len; i++) {
@@ -130,6 +136,7 @@ function alphaNumCmp(a, b) {
       // Out of bounds for one of the sides
       return alist.length - blist.length;
     }
+
     if (alist[i] != blist[i]) {
       // find the first non-equal part
       if (alist[i].match(/\d/)) // if numeric
@@ -140,6 +147,7 @@ function alphaNumCmp(a, b) {
       }
     }
   }
+
   return 0;
 }
 
@@ -161,6 +169,7 @@ var formatMillisecond = ruLocale.format(".%L"),
     formatWeek = ruLocale.format("%b %d"),
     formatMonth = ruLocale.format("%B"),
     formatYear = ruLocale.format("%Y");
+
 function multiFormat(date) {
   return (d3Time.timeSecond(date) < date ? formatMillisecond : d3Time.timeMinute(date) < date ? formatSecond : d3Time.timeHour(date) < date ? formatMinute : d3Time.timeDay(date) < date ? formatHour : d3Time.timeMonth(date) < date ? d3Time.timeWeek(date) < date ? formatDay : formatWeek : d3Time.timeYear(date) < date ? formatMonth : formatYear)(date);
 }
@@ -170,37 +179,30 @@ var labels = {
   to: 'По',
   resetZoom: 'Сбросить масштаб'
 };
-
 var timeFormat = '%d.%m.%Y %-H:%M';
 
 var timelines = Kapsule({
   props: {
     data: {
-      default: [],
+      "default": [],
       onChange: function onChange(data, state) {
         parseData(data);
-
         state.zoomX = [d3Array.min(state.completeFlatData, function (d) {
           return d.timeRange[0];
         }), d3Array.max(state.completeFlatData, function (d) {
           return d.timeRange[1];
         })];
-
         state.zoomY = [null, null];
 
         if (state.overviewArea) {
           state.overviewArea.domainRange(state.zoomX).currentSelection(state.zoomX);
-        }
+        } //
 
-        //
 
         function parseData(rawData) {
-
           state.completeStructData = [];
           state.completeFlatData = [];
           state.totalNLines = 0;
-
-          var dateObjs = rawData.length ? rawData[0].data[0].data[0].timeRange[0] instanceof Date : false;
 
           for (var i = 0, ilen = rawData.length; i < ilen; i++) {
             var group = rawData[i].group;
@@ -216,35 +218,63 @@ var timelines = Kapsule({
                 var completeFlatDataItem = {
                   group: group,
                   label: rawData[i].data[j].label,
-                  timeRange: dateObjs ? rawData[i].data[j].data[k].timeRange : [new Date(rawData[i].data[j].data[k].timeRange[0]), new Date(rawData[i].data[j].data[k].timeRange[1])],
+                  timeRange: rawData[i].data[j].data[k].timeRange.map(function (d) {
+                    return new Date(d);
+                  }),
                   val: rawData[i].data[j].data[k].val,
                   labelVal: rawData[i].data[j].data[k][rawData[i].data[j].data[k].hasOwnProperty('labelVal') ? 'labelVal' : 'val']
                 };
+
                 for (var l = 0, llen = state.additionalProperties.length; l < llen; l++) {
                   completeFlatDataItem[state.additionalProperties[l]] = rawData[i].data[j].data[k][state.additionalProperties[l]];
                 }
+
                 state.completeFlatData.push(completeFlatDataItem);
               }
+
               state.totalNLines++;
             }
           }
         }
       }
     },
-    yAxisConfig: { default: { groups: true, labels: true } },
-    width: { default: window.innerWidth },
-    maxHeight: { default: 640 },
-    maxLineHeight: { default: 40 },
-    leftMargin: { default: 90 },
-    rightMargin: { default: 100 },
-    topMargin: { default: 26 },
-    bottomMargin: { default: 30 },
-    useUtc: { default: false },
-    labels: { default: {
+    yAxisConfig: {
+      "default": {
+        groups: true,
+        labels: true
+      }
+    },
+    width: {
+      "default": window.innerWidth
+    },
+    maxHeight: {
+      "default": 640
+    },
+    maxLineHeight: {
+      "default": 40
+    },
+    leftMargin: {
+      "default": 90
+    },
+    rightMargin: {
+      "default": 100
+    },
+    topMargin: {
+      "default": 26
+    },
+    bottomMargin: {
+      "default": 30
+    },
+    useUtc: {
+      "default": false
+    },
+    labels: {
+      "default": {
         from: 'From',
         to: 'To',
         resetZoom: 'Reset Zoom'
-      } },
+      }
+    },
     locale: {
       onChange: function onChange(locale, state) {
         if (locale === 'RU') {
@@ -256,50 +286,78 @@ var timelines = Kapsule({
       }
     },
     xTickFormat: {},
-    timeFormat: { default: '%Y-%m-%d %-I:%M:%S %p', triggerUpdate: false },
-    zoomX: { // Which time-range to show (null = min/max)
-      default: [null, null],
+    dateMarker: {},
+    timeFormat: {
+      "default": '%Y-%m-%d %-I:%M:%S %p',
+      triggerUpdate: false
+    },
+    zoomX: {
+      // Which time-range to show (null = min/max)
+      "default": [null, null],
       onChange: function onChange(zoomX, state) {
-        if (state.svg) state.svg.dispatch('zoom', { detail: {
+        if (state.svg) state.svg.dispatch('zoom', {
+          detail: {
             zoomX: zoomX,
             zoomY: null,
             redraw: false
-          } });
+          }
+        });
       }
     },
-    zoomY: { // Which lines to show (null = min/max) [0 indexed]
-      default: [null, null],
+    zoomY: {
+      // Which lines to show (null = min/max) [0 indexed]
+      "default": [null, null],
       onChange: function onChange(zoomY, state) {
-        if (state.svg) state.svg.dispatch('zoom', { detail: {
+        if (state.svg) state.svg.dispatch('zoom', {
+          detail: {
             zoomX: null,
             zoomY: zoomY,
             redraw: false
-          } });
+          }
+        });
       }
     },
     minSegmentDuration: {},
-    zColorScale: { default: d3Scale.scaleSequential(d3ScaleChromatic.interpolateRdYlBu) },
-    zQualitative: { default: true, onChange: function onChange(discrete, state) {
-        state.zColorScale = discrete ? d3Scale.scaleOrdinal([].concat(toConsumableArray(d3ScaleChromatic.schemeCategory10), toConsumableArray(d3ScaleChromatic.schemeSet3))) : d3Scale.scaleSequential(d3ScaleChromatic.interpolateRdYlBu); // alt: d3.interpolateInferno
+    zColorScale: {
+      "default": d3Scale.scaleSequential(d3ScaleChromatic.interpolateRdYlBu)
+    },
+    zQualitative: {
+      "default": true,
+      onChange: function onChange(discrete, state) {
+        state.zColorScale = discrete ? d3Scale.scaleOrdinal([].concat(_toConsumableArray(d3ScaleChromatic.schemeCategory10), _toConsumableArray(d3ScaleChromatic.schemeSet3))) : d3Scale.scaleSequential(d3ScaleChromatic.interpolateRdYlBu); // alt: d3.interpolateInferno
       }
     },
-    zDataLabel: { default: '', triggerUpdate: false }, // Units of z data. Used in the tooltip descriptions
-    zScaleLabel: { default: '', triggerUpdate: false }, // Units of colorScale. Used in the legend label
-    enableOverview: { default: true }, // True/False
+    zDataLabel: {
+      "default": '',
+      triggerUpdate: false
+    },
+    // Units of z data. Used in the tooltip descriptions
+    zScaleLabel: {
+      "default": '',
+      triggerUpdate: false
+    },
+    // Units of colorScale. Used in the legend label
+    enableOverview: {
+      "default": true
+    },
+    // True/False
     enableAnimations: {
-      default: true,
+      "default": true,
       onChange: function onChange(val, state) {
         state.transDuration = val ? 700 : 0;
       }
     },
-    additionalProperties: { default: [] },
-
+    additionalProperties: {
+      "default": []
+    },
     // Callbacks
-    onZoom: {}, // When user zooms in / resets zoom. Returns ([startX, endX], [startY, endY])
-    onLabelClick: {}, // When user clicks on a group or y label. Returns (group) or (label, group) respectively
-    onSegmentClick: {}
-  },
+    onZoom: {},
+    // When user zooms in / resets zoom. Returns ([startX, endX], [startY, endY])
+    onLabelClick: {},
+    // When user clicks on a group or y label. Returns (group) or (label, group) respectively
+    onSegmentClick: {} // When user clicks on a segment. Returns (segment object) respectively
 
+  },
   methods: {
     getNLines: function getNLines(s) {
       return s.nLines;
@@ -317,24 +375,20 @@ var timelines = Kapsule({
       if (!_) {
         return [y2Label(state.zoomY[0]), y2Label(state.zoomY[1])];
       }
-      return this.zoomY([label2Y(_[0], true), label2Y(_[1], false)]);
 
-      //
+      return this.zoomY([label2Y(_[0], true), label2Y(_[1], false)]); //
 
       function y2Label(y) {
-
         if (y == null) return y;
-
         var cntDwn = y;
+
         for (var i = 0, len = state.completeStructData.length; i < len; i++) {
           if (state.completeStructData[i].lines.length > cntDwn) return getIdxLine(state.completeStructData[i], cntDwn);
           cntDwn -= state.completeStructData[i].lines.length;
-        }
+        } // y larger than all lines, return last
 
-        // y larger than all lines, return last
-        return getIdxLine(state.completeStructData[state.completeStructData.length - 1], state.completeStructData[state.completeStructData.length - 1].lines.length - 1);
 
-        //
+        return getIdxLine(state.completeStructData[state.completeStructData.length - 1], state.completeStructData[state.completeStructData.length - 1].lines.length - 1); //
 
         function getIdxLine(grpData, idx) {
           return {
@@ -345,30 +399,34 @@ var timelines = Kapsule({
       }
 
       function label2Y(label, useIdxAfterIfNotFound) {
-
         useIdxAfterIfNotFound = useIdxAfterIfNotFound || false;
         var subIdxNotFound = useIdxAfterIfNotFound ? 0 : 1;
-
         if (label == null) return label;
-
         var idx = 0;
+
         for (var i = 0, lenI = state.completeStructData.length; i < lenI; i++) {
           var grpCmp = state.grpCmpFunction(label.group, state.completeStructData[i].group);
           if (grpCmp < 0) break;
+
           if (grpCmp == 0 && label.group == state.completeStructData[i].group) {
             for (var j = 0, lenJ = state.completeStructData[i].lines.length; j < lenJ; j++) {
               var cmpRes = state.labelCmpFunction(label.label, state.completeStructData[i].lines[j]);
+
               if (cmpRes < 0) {
                 return idx + j - subIdxNotFound;
               }
+
               if (cmpRes == 0 && label.label == state.completeStructData[i].lines[j]) {
                 return idx + j;
               }
             }
+
             return idx + state.completeStructData[i].lines.length - subIdxNotFound;
           }
+
           idx += state.completeStructData[i].lines.length;
         }
+
         return idx - subIdxNotFound;
       }
     },
@@ -376,13 +434,13 @@ var timelines = Kapsule({
       if (labelCmpFunction == null) {
         labelCmpFunction = state.labelCmpFunction;
       }
+
       if (grpCmpFunction == null) {
         grpCmpFunction = state.grpCmpFunction;
       }
 
       state.labelCmpFunction = labelCmpFunction;
       state.grpCmpFunction = grpCmpFunction;
-
       state.completeStructData.sort(function (a, b) {
         return grpCmpFunction(a.group, b.group);
       });
@@ -399,9 +457,11 @@ var timelines = Kapsule({
       if (asc == null) {
         asc = true;
       }
+
       var alphaCmp = function alphaCmp(a, b) {
         return alphaNumCmp(asc ? a : b, asc ? b : a);
       };
+
       return this.sort(alphaCmp, alphaCmp);
     },
     sortChrono: function sortChrono(state, asc) {
@@ -414,8 +474,9 @@ var timelines = Kapsule({
 
         var _loop = function _loop(i, len) {
           var key = accessFunction(state.completeFlatData[i]);
+
           if (idx.hasOwnProperty(key)) {
-            return 'continue';
+            return "continue";
           }
 
           var itmList = state.completeFlatData.filter(function (d) {
@@ -429,26 +490,27 @@ var timelines = Kapsule({
         };
 
         for (var i = 0, len = state.completeFlatData.length; i < len; i++) {
-          var _ret = _loop(i, len);
+          var _ret = _loop(i);
 
-          if (_ret === 'continue') continue;
+          if (_ret === "continue") continue;
         }
+
         return idx;
       }
 
       var timeCmp = function timeCmp(a, b) {
-
         var aT = a[1],
             bT = b[1];
-
         if (!aT || !bT) return null; // One of the two vals is null
 
         if (aT[1].getTime() == bT[1].getTime()) {
           if (aT[0].getTime() == bT[0].getTime()) {
             return alphaNumCmp(a[0], b[0]); // If first and last is same, use alphaNum
           }
+
           return aT[0] - bT[0]; // If last is same, earliest first wins
         }
+
         return bT[1] - aT[1]; // latest last wins
       };
 
@@ -464,14 +526,12 @@ var timelines = Kapsule({
       var lblIdx = buildIdx(function (d) {
         return d.label;
       });
-
       var grpCmp = getCmpFunction(function (d) {
         return [d, grpIdx[d] || null];
       }, asc);
       var lblCmp = getCmpFunction(function (d) {
         return [d, lblIdx[d] || null];
       }, asc);
-
       return this.sort(lblCmp, grpCmp);
     },
     overviewDomain: function overviewDomain(state, _) {
@@ -482,99 +542,84 @@ var timelines = Kapsule({
       if (!_) {
         return state.overviewArea.domainRange();
       }
+
       state.overviewArea.domainRange(_);
       return this;
     },
     refresh: function refresh(state) {
       state._rerender();
+
       return this;
     }
   },
-
   stateInit: {
     height: null,
-    overviewHeight: 20, // Height of overview section in bottom
+    overviewHeight: 20,
+    // Height of overview section in bottom
     minLabelFont: 2,
     groupBkgGradient: ['#FAFAFA', '#E0E0E0'],
-
     yScale: null,
     grpScale: null,
-
     xAxis: null,
     xGrid: null,
     yAxis: null,
     grpAxis: null,
-
+    dateMarkerLine: null,
     svg: null,
     graph: null,
     overviewAreaElem: null,
     overviewArea: null,
-
     graphW: null,
     graphH: null,
-
     completeStructData: null,
     structData: null,
     completeFlatData: null,
     flatData: null,
     totalNLines: null,
     nLines: null,
-
-    minSegmentDuration: 0, // ms
-
-    transDuration: 700, // ms for transition duration
-
+    minSegmentDuration: 0,
+    // ms
+    transDuration: 700,
+    // ms for transition duration
     labelCmpFunction: alphaNumCmp,
     grpCmpFunction: alphaNumCmp
   },
-
   init: function init(el, state) {
     var elem = d3Selection.select(el).attr('class', 'timelines-chart');
-
     state.svg = elem.append('svg');
-    state.overviewAreaElem = elem.append('div');
+    state.overviewAreaElem = elem.append('div'); // Initialize scales and axes
 
-    // Initialize scales and axes
     state.yScale = d3Scale.scalePoint();
     state.grpScale = d3Scale.scaleOrdinal();
     state.xAxis = d3Axis.axisBottom();
     state.xGrid = d3Axis.axisTop();
     state.yAxis = d3Axis.axisRight();
     state.grpAxis = d3Axis.axisLeft();
-
     buildDomStructure();
     addTooltips();
     addZoomSelection();
-    setEvents();
-
-    //
+    setEvents(); //
 
     function buildDomStructure() {
-
       state.yScale.invert = invertOrdinal;
       state.grpScale.invert = invertOrdinal;
-
       state.groupGradId = svgUtils.gradient().colorScale(d3Scale.scaleLinear().domain([0, 1]).range(state.groupBkgGradient)).angle(-90)(state.svg.node()).id();
-
       var axises = state.svg.append('g').attr('class', 'axises');
       axises.append('g').attr('class', 'x-axis');
       axises.append('g').attr('class', 'x-grid');
       axises.append('g').attr('class', 'y-axis');
       axises.append('g').attr('class', 'grp-axis');
-
       state.yAxis.scale(state.yScale).tickSize(0);
-
       state.grpAxis.scale(state.grpScale).tickSize(0);
-
       state.colorLegend = ColorLegend()(state.svg.append('g').attr('class', 'legendG').node());
-
       state.graph = state.svg.append('g');
+      state.dateMarkerLine = state.svg.append('line').attr('class', 'x-axis-date-marker');
 
       if (state.enableOverview) {
         addOverviewArea();
-      }
+      } // Applies to ordinal scales (invert not supported in d3)
 
-      // Applies to ordinal scales (invert not supported in d3)
+
       function invertOrdinal(val, cmpFunc) {
         cmpFunc = cmpFunc || function (a, b) {
           return a >= b;
@@ -589,6 +634,7 @@ var timelines = Kapsule({
         }
 
         var bias = scRange[0];
+
         for (var i = 0, len = scRange.length; i < len; i++) {
           if (cmpFunc(scRange[i] + bias, val)) {
             return scDomain[Math.round(i * scDomain.length / scRange.length)];
@@ -599,25 +645,28 @@ var timelines = Kapsule({
       }
 
       function addOverviewArea() {
-        state.overviewArea = TimeOverview().margins({ top: 1, right: 20, bottom: 20, left: 20 }).onChange(function (startTime, endTime) {
-          state.svg.dispatch('zoom', { detail: {
+        state.overviewArea = TimeOverview().margins({
+          top: 1,
+          right: 20,
+          bottom: 20,
+          left: 20
+        }).onChange(function (startTime, endTime) {
+          state.svg.dispatch('zoom', {
+            detail: {
               zoomX: [startTime, endTime],
               zoomY: null
-            } });
+            }
+          });
         }).domainRange(state.zoomX).currentSelection(state.zoomX)(state.overviewAreaElem.node());
-
         state.svg.on('zoomScent', function () {
           var zoomX = d3Selection.event.detail.zoomX;
+          if (!state.overviewArea || !zoomX) return; // Out of overview bounds > extend it
 
-          if (!state.overviewArea || !zoomX) return;
-
-          // Out of overview bounds
           if (zoomX[0] < state.overviewArea.domainRange()[0] || zoomX[1] > state.overviewArea.domainRange()[1]) {
-            state.overviewArea.update([new Date(Math.min(zoomX[0], state.overviewArea.domainRange()[0])), new Date(Math.max(zoomX[1], state.overviewArea.domainRange()[1]))], state.zoomX);
-          } else {
-            // Normal case
-            state.overviewArea.currentSelection(zoomX);
+            state.overviewArea.domainRange([new Date(Math.min(zoomX[0], state.overviewArea.domainRange()[0])), new Date(Math.max(zoomX[1], state.overviewArea.domainRange()[1]))]);
           }
+
+          state.overviewArea.currentSelection(zoomX);
         });
       }
     }
@@ -629,23 +678,18 @@ var timelines = Kapsule({
         state.groupTooltip.offset([topPush, -leftPush]);
         return d.group;
       });
-
       state.svg.call(state.groupTooltip);
-
       state.lineTooltip = d3Tip().attr('class', 'chart-tooltip line-tooltip').direction('e').offset([0, 0]).html(function (d) {
         var rightPush = d.hasOwnProperty('timeRange') ? state.xScale.range()[1] - state.xScale(d.timeRange[1]) : 0;
         state.lineTooltip.offset([0, rightPush]);
         return d.label;
       });
-
       state.svg.call(state.lineTooltip);
-
       state.segmentTooltip = d3Tip().attr('class', 'chart-tooltip segment-tooltip').direction('s').offset([5, 0]).html(function (d) {
         var normVal = state.zColorScale.domain()[state.zColorScale.domain().length - 1] - state.zColorScale.domain()[0];
-        var dateFormat = (state.useUtc ? d3TimeFormat.utcFormat : d3TimeFormat.timeFormat)('' + state.timeFormat + (state.useUtc ? ' (UTC)' : ''));
-        return '<strong>' + d.labelVal + ' </strong>' + state.zDataLabel + '\n            ' + (normVal ? ' (<strong>' + Math.round((d.val - state.zColorScale.domain()[0]) / normVal * 100 * 100) / 100 + '%</strong>)' : '') + '<br>\n            <strong>' + state.labels.from + ': </strong>' + dateFormat(d.timeRange[0]) + '<br>\n            <strong>' + state.labels.to + ': </strong>' + dateFormat(d.timeRange[1]);
+        var dateFormat = (state.useUtc ? d3TimeFormat.utcFormat : d3TimeFormat.timeFormat)("".concat(state.timeFormat).concat(state.useUtc ? ' (UTC)' : ''));
+        return "<strong>".concat(d.labelVal, " </strong>").concat(state.zDataLabel, "\n            ").concat(normVal ? " (<strong>".concat(Math.round((d.val - state.zColorScale.domain()[0]) / normVal * 100 * 100) / 100, "%</strong>)") : '', "<br>\n            <strong>").concat(state.labels.from, ": </strong>").concat(dateFormat(d.timeRange[0]), "<br>\n            <strong>").concat(state.labels.to, ": </strong>").concat(dateFormat(d.timeRange[1]));
       });
-
       state.svg.call(state.segmentTooltip);
     }
 
@@ -653,58 +697,49 @@ var timelines = Kapsule({
       state.graph.on('mousedown', function () {
         if (d3Selection.select(window).on('mousemove.zoomRect') != null) // Selection already active
           return;
-
         var e = this;
-
         if (d3Selection.mouse(e)[0] < 0 || d3Selection.mouse(e)[0] > state.graphW || d3Selection.mouse(e)[1] < 0 || d3Selection.mouse(e)[1] > state.graphH) return;
-
         state.disableHover = true;
-
         var rect = state.graph.append('rect').attr('class', 'chart-zoom-selection');
-
         var startCoords = d3Selection.mouse(e);
-
         d3Selection.select(window).on('mousemove.zoomRect', function () {
           d3Selection.event.stopPropagation();
           var newCoords = [Math.max(0, Math.min(state.graphW, d3Selection.mouse(e)[0])), Math.max(0, Math.min(state.graphH, d3Selection.mouse(e)[1]))];
           rect.attr('x', Math.min(startCoords[0], newCoords[0])).attr('y', Math.min(startCoords[1], newCoords[1])).attr('width', Math.abs(newCoords[0] - startCoords[0])).attr('height', Math.abs(newCoords[1] - startCoords[1]));
-
-          state.svg.dispatch('zoomScent', { detail: {
+          state.svg.dispatch('zoomScent', {
+            detail: {
               zoomX: [startCoords[0], newCoords[0]].sort(d3Array.ascending).map(state.xScale.invert),
               zoomY: [startCoords[1], newCoords[1]].sort(d3Array.ascending).map(function (d) {
                 return state.yScale.domain().indexOf(state.yScale.invert(d)) + (state.zoomY && state.zoomY[0] ? state.zoomY[0] : 0);
               })
-            } });
+            }
+          });
         }).on('mouseup.zoomRect', function () {
           d3Selection.select(window).on('mousemove.zoomRect', null).on('mouseup.zoomRect', null);
           d3Selection.select('body').classed('stat-noselect', false);
           rect.remove();
           state.disableHover = false;
-
           var endCoords = [Math.max(0, Math.min(state.graphW, d3Selection.mouse(e)[0])), Math.max(0, Math.min(state.graphH, d3Selection.mouse(e)[1]))];
-
           if (startCoords[0] == endCoords[0] && startCoords[1] == endCoords[1]) return;
-
           var newDomainX = [startCoords[0], endCoords[0]].sort(d3Array.ascending).map(state.xScale.invert);
-
           var newDomainY = [startCoords[1], endCoords[1]].sort(d3Array.ascending).map(function (d) {
             return state.yScale.domain().indexOf(state.yScale.invert(d)) + (state.zoomY && state.zoomY[0] ? state.zoomY[0] : 0);
           });
-
           var changeX = newDomainX[1] - newDomainX[0] > 60 * 1000; // Zoom damper
+
           var changeY = newDomainY[0] != state.zoomY[0] || newDomainY[1] != state.zoomY[1];
 
           if (changeX || changeY) {
-            state.svg.dispatch('zoom', { detail: {
+            state.svg.dispatch('zoom', {
+              detail: {
                 zoomX: changeX ? newDomainX : null,
                 zoomY: changeY ? newDomainY : null
-              } });
+              }
+            });
           }
         }, true);
-
         d3Selection.event.stopPropagation();
       });
-
       state.resetBtn = state.svg.append('text').attr('class', 'reset-zoom-btn').text(state.labels.resetZoom).style('text-anchor', 'end').on('mouseup', function () {
         state.svg.dispatch('resetZoom');
       }).on('mouseover', function () {
@@ -715,33 +750,29 @@ var timelines = Kapsule({
     }
 
     function setEvents() {
-
       state.svg.on('zoom', function () {
         var evData = d3Selection.event.detail,
             zoomX = evData.zoomX,
             zoomY = evData.zoomY,
             redraw = evData.redraw == null ? true : evData.redraw;
-
         if (!zoomX && !zoomY) return;
-
         if (zoomX) state.zoomX = zoomX;
         if (zoomY) state.zoomY = zoomY;
-
-        state.svg.dispatch('zoomScent', { detail: {
+        state.svg.dispatch('zoomScent', {
+          detail: {
             zoomX: zoomX,
             zoomY: zoomY
-          } });
-
+          }
+        });
         if (!redraw) return;
 
         state._rerender();
+
         if (state.onZoom) state.onZoom(state.zoomX, state.zoomY);
       });
-
       state.svg.on('resetZoom', function () {
         var prevZoomX = state.zoomX;
         var prevZoomY = state.zoomY || [null, null];
-
         var newZoomX = state.enableOverview ? state.overviewArea.domainRange() : [d3Array.min(state.flatData, function (d) {
           return d.timeRange[0];
         }), d3Array.max(state.flatData, function (d) {
@@ -750,13 +781,14 @@ var timelines = Kapsule({
             newZoomY = [null, null];
 
         if (prevZoomX[0] < newZoomX[0] || prevZoomX[1] > newZoomX[1] || prevZoomY[0] != newZoomY[0] || prevZoomY[1] != newZoomX[1]) {
-
           state.zoomX = [new Date(Math.min(prevZoomX[0], newZoomX[0])), new Date(Math.max(prevZoomX[1], newZoomX[1]))];
           state.zoomY = newZoomY;
-          state.svg.dispatch('zoomScent', { detail: {
+          state.svg.dispatch('zoomScent', {
+            detail: {
               zoomX: state.zoomX,
               zoomY: state.zoomY
-            } });
+            }
+          });
 
           state._rerender();
         }
@@ -766,45 +798,41 @@ var timelines = Kapsule({
     }
   },
   update: function update(state) {
-
     applyFilters();
     setupDimensions();
-
     adjustXScale();
     adjustYScale();
     adjustGrpScale();
-
     renderAxises();
     renderGroups();
-
     renderTimelines();
-    adjustLegend();
-
-    //
+    adjustLegend(); //
 
     function applyFilters() {
       // Flat data based on segment length
       state.flatData = state.minSegmentDuration > 0 ? state.completeFlatData.filter(function (d) {
         return d.timeRange[1] - d.timeRange[0] >= state.minSegmentDuration;
-      }) : state.completeFlatData;
+      }) : state.completeFlatData; // zoomY
 
-      // zoomY
       if (state.zoomY == null || state.zoomY == [null, null]) {
         state.structData = state.completeStructData;
         state.nLines = 0;
+
         for (var i = 0, len = state.structData.length; i < len; i++) {
           state.nLines += state.structData[i].lines.length;
         }
+
         return;
       }
 
       state.structData = [];
       var cntDwn = [state.zoomY[0] == null ? 0 : state.zoomY[0]]; // Initial threshold
+
       cntDwn.push(Math.max(0, (state.zoomY[1] == null ? state.totalNLines : state.zoomY[1] + 1) - cntDwn[0])); // Number of lines
+
       state.nLines = cntDwn[1];
 
-      var _loop2 = function _loop2(_i, _len) {
-
+      var _loop3 = function _loop3(_i, _len) {
         var validLines = state.completeStructData[_i].lines;
 
         if (state.minSegmentDuration > 0) {
@@ -812,7 +840,7 @@ var timelines = Kapsule({
           if (!state.flatData.some(function (d) {
             return d.group == state.completeStructData[_i].group;
           })) {
-            return 'continue'; // No data for this group
+            return "continue"; // No data for this group
           }
 
           validLines = state.completeStructData[_i].lines.filter(function (d) {
@@ -825,7 +853,7 @@ var timelines = Kapsule({
         if (cntDwn[0] >= validLines.length) {
           // Ignore whole group (before start)
           cntDwn[0] -= validLines.length;
-          return 'continue';
+          return "continue";
         }
 
         var groupData = {
@@ -838,7 +866,7 @@ var timelines = Kapsule({
           groupData.lines = validLines.slice(cntDwn[0], cntDwn[1] + cntDwn[0]);
           state.structData.push(groupData);
           cntDwn[1] = 0;
-          return 'break';
+          return "break";
         }
 
         if (cntDwn[0] > 0) {
@@ -854,15 +882,16 @@ var timelines = Kapsule({
         cntDwn[1] -= groupData.lines.length;
       };
 
-      _loop3: for (var _i = 0, _len = state.completeStructData.length; _i < _len; _i++) {
-        var _ret2 = _loop2(_i, _len);
+      _loop2: for (var _i = 0, _len = state.completeStructData.length; _i < _len; _i++) {
+        var _ret2 = _loop3(_i);
 
         switch (_ret2) {
-          case 'continue':
+          case "continue":
             continue;
 
-          case 'break':
-            break _loop3;}
+          case "break":
+            break _loop2;
+        }
       }
 
       state.nLines -= cntDwn[1];
@@ -872,9 +901,7 @@ var timelines = Kapsule({
       state.graphW = state.width - state.leftMargin - state.rightMargin;
       state.graphH = d3Array.min([state.nLines * state.maxLineHeight, state.maxHeight - state.topMargin - state.bottomMargin]);
       state.height = state.graphH + state.topMargin + state.bottomMargin;
-
       state.svg.transition().duration(state.transDuration).attr('width', state.width).attr('height', state.height);
-
       state.graph.attr('transform', 'translate(' + state.leftMargin + ',' + state.topMargin + ')');
 
       if (state.overviewArea) {
@@ -889,7 +916,6 @@ var timelines = Kapsule({
       state.zoomX[1] = state.zoomX[1] || d3Array.max(state.flatData, function (d) {
         return d.timeRange[1];
       });
-
       state.xScale = (state.useUtc ? d3Scale.scaleUtc : d3Scale.scaleTime)().domain(state.zoomX).range([0, state.graphW]).clamp(true);
 
       if (state.overviewArea) {
@@ -898,27 +924,26 @@ var timelines = Kapsule({
     }
 
     function adjustYScale() {
-      var labels$$1 = [];
+      var labels = [];
 
       var _loop4 = function _loop4(i, len) {
-        labels$$1 = labels$$1.concat(state.structData[i].lines.map(function (d) {
+        labels = labels.concat(state.structData[i].lines.map(function (d) {
           return state.structData[i].group + '+&+' + d;
         }));
       };
 
       for (var i = 0, len = state.structData.length; i < len; i++) {
-        _loop4(i, len);
+        _loop4(i);
       }
 
-      state.yScale.domain(labels$$1);
-      state.yScale.range([state.graphH / labels$$1.length * 0.5, state.graphH * (1 - 0.5 / labels$$1.length)]);
+      state.yScale.domain(labels);
+      state.yScale.range([state.graphH / labels.length * 0.5, state.graphH * (1 - 0.5 / labels.length)]);
     }
 
     function adjustGrpScale() {
       state.grpScale.domain(state.structData.map(function (d) {
         return d.group;
       }));
-
       var cntLines = 0;
       state.grpScale.range(state.structData.map(function (d) {
         var pos = (cntLines + d.lines.length / 2) / state.nLines * state.graphH;
@@ -928,12 +953,9 @@ var timelines = Kapsule({
     }
 
     function adjustLegend() {
-      state.svg.select('.legendG').transition().duration(state.transDuration).attr('transform', 'translate(' + (state.leftMargin + state.graphW * 0.05) + ',2)');
-
+      state.svg.select('.legendG').transition().duration(state.transDuration).attr('transform', "translate(".concat(state.leftMargin + state.graphW * 0.05, ",2)"));
       state.colorLegend.width(Math.max(120, state.graphW / 3 * (state.zQualitative ? 2 : 1))).height(state.topMargin * .6).scale(state.zColorScale).label(state.zScaleLabel);
-
       state.resetBtn.transition().duration(state.transDuration).attr('x', state.leftMargin + state.graphW * .99).attr('y', state.topMargin * .8);
-
       svgTextFit.fitToBox().bbox({
         width: state.graphW * .4,
         height: Math.min(13, state.topMargin * .8)
@@ -941,15 +963,12 @@ var timelines = Kapsule({
     }
 
     function renderAxises() {
+      state.svg.select('.axises').attr('transform', 'translate(' + state.leftMargin + ',' + state.topMargin + ')'); // X
 
-      state.svg.select('.axises').attr('transform', 'translate(' + state.leftMargin + ',' + state.topMargin + ')');
-
-      // X
-      state.xAxis.scale(state.xScale).ticks(Math.round(state.graphW * 0.0011)).tickFormat(state.xTickFormat);
-      state.xGrid.scale(state.xScale).ticks(state.xAxis.ticks()[0]).tickFormat('');
-
+      var nXTicks = Math.max(2, Math.min(12, Math.round(state.graphW * 0.012)));
+      state.xAxis.scale(state.xScale).ticks(nXTicks).tickFormat(state.xTickFormat);
+      state.xGrid.scale(state.xScale).ticks(nXTicks).tickFormat('');
       state.svg.select('g.x-axis').style('stroke-opacity', 0).style('fill-opacity', 0).attr('transform', 'translate(0,' + state.graphH + ')').transition().duration(state.transDuration).call(state.xAxis).style('stroke-opacity', 1).style('fill-opacity', 1);
-
       /* Angled x axis labels
        state.svg.select('g.x-axis').selectAll('text')
        .style('text-anchor', 'end')
@@ -959,9 +978,15 @@ var timelines = Kapsule({
       state.xGrid.tickSize(state.graphH);
       state.svg.select('g.x-grid').attr('transform', 'translate(0,' + state.graphH + ')').transition().duration(state.transDuration).call(state.xGrid);
 
-      var fontVerticalMargin = 0.6;
+      if (state.dateMarker && state.dateMarker >= state.xScale.domain()[0] && state.dateMarker <= state.xScale.domain()[1]) {
+        state.dateMarkerLine.style('display', 'block').transition().duration(state.transDuration).attr('x1', state.xScale(state.dateMarker) + state.leftMargin).attr('x2', state.xScale(state.dateMarker) + state.leftMargin).attr('y1', state.topMargin + 1).attr('y2', state.graphH + state.topMargin);
+      } else {
+        state.dateMarkerLine.style('display', 'none');
+      } // Y
 
-      // Y
+
+      var fontVerticalMargin = 0.6; // Y
+
       if (state.yAxisConfig.labels) {
         var labelDisplayRatio = Math.ceil(state.nLines * state.minLabelFont / Math.sqrt(2) / state.graphH / fontVerticalMargin);
         var tickVals = state.yScale.domain().filter(function (d, i) {
@@ -969,45 +994,45 @@ var timelines = Kapsule({
         });
         var fontSize = Math.min(12, state.graphH / tickVals.length * fontVerticalMargin * Math.sqrt(2));
         var maxChars = Math.ceil(state.rightMargin / (fontSize / Math.sqrt(2)));
-
         state.yAxis.tickValues(tickVals);
         state.yAxis.tickFormat(function (d) {
           return reduceLabel(d.split('+&+')[1], maxChars);
         });
         state.svg.select('g.y-axis').transition().duration(state.transDuration).attr('transform', 'translate(' + state.graphW + ', 0)').style('font-size', fontSize + 'px').call(state.yAxis);
-      }
+      } // Grp
 
-      // Grp
+
       if (state.yAxisConfig.groups) {
         var minHeight = d3Array.min(state.grpScale.range(), function (d, i) {
           return i > 0 ? d - state.grpScale.range()[i - 1] : d * 2;
         });
+
         var _fontSize = Math.min(14, minHeight * fontVerticalMargin * Math.sqrt(2));
+
         var _maxChars = Math.floor(state.leftMargin / (_fontSize / Math.sqrt(2)));
 
         state.grpAxis.tickFormat(function (d) {
           return reduceLabel(d, _maxChars);
         });
         state.svg.select('g.grp-axis').transition().duration(state.transDuration).style('font-size', _fontSize + 'px').call(state.grpAxis);
-      }
+      } // Make Segments clickable
 
-      // Make Segments clickable
+
       if (state.onSegmentClick) {
         state.svg.selectAll('rect.series-segment').on('click', function (d, a) {
           console.log('onSegmentClicked', d, a);
           state.onSegmentClick(d);
         });
-      }
+      } // Make Axises clickable
 
-      // Make Axises clickable
+
       if (state.onLabelClick) {
         state.svg.selectAll('g.y-axis,g.grp-axis').selectAll('text').style('cursor', 'pointer').on('click', function (d) {
           var segms = d.split('+&+');
-          state.onLabelClick.apply(state, toConsumableArray(segms.reverse()));
+          state.onLabelClick.apply(state, _toConsumableArray(segms.reverse()));
         });
-      }
+      } //
 
-      //
 
       function reduceLabel(label, maxChars) {
         return label.length <= maxChars ? label : label.substring(0, maxChars * 2 / 3) + '...' + label.substring(label.length - maxChars / 3, label.length);
@@ -1015,13 +1040,10 @@ var timelines = Kapsule({
     }
 
     function renderGroups() {
-
       var groups = state.graph.selectAll('rect.series-group').data(state.structData, function (d) {
         return d.group;
       });
-
       groups.exit().transition().duration(state.transDuration).style('stroke-opacity', 0).style('fill-opacity', 0).remove();
-
       var newGroups = groups.enter().append('rect').attr('class', 'series-group').attr('x', 0).attr('y', 0).attr('height', 0).style('fill', 'url(#' + state.groupGradId + ')');
 
       if (state.yAxisConfig.groups) {
@@ -1029,9 +1051,7 @@ var timelines = Kapsule({
       }
 
       newGroups.append('title').text('click-drag to zoom in');
-
       groups = groups.merge(newGroups);
-
       groups.transition().duration(state.transDuration).attr('width', state.graphW).attr('height', function (d) {
         return state.graphH * d.lines.length / state.nLines;
       }).attr('y', function (d) {
@@ -1040,9 +1060,7 @@ var timelines = Kapsule({
     }
 
     function renderTimelines(maxElems) {
-
       if (maxElems < 0) maxElems = null;
-
       var hoverEnlargeRatio = .4;
 
       var dataFilter = function dataFilter(d, i) {
@@ -1050,13 +1068,10 @@ var timelines = Kapsule({
       };
 
       state.lineHeight = state.graphH / state.nLines * 0.8;
-
       var timelines = state.graph.selectAll('rect.series-segment').data(state.flatData.filter(dataFilter), function (d) {
         return d.group + d.label + d.timeRange[0];
       });
-
       timelines.exit().transition().duration(state.transDuration).style('fill-opacity', 0).remove();
-
       var newSegments = timelines.enter().append('rect').attr('class', 'series-segment').attr('rx', 1).attr('ry', 1).attr('x', state.graphW / 2).attr('y', state.graphH / 2).attr('width', 0).attr('height', 0).style('fill', function (d) {
         return state.zColorScale(d.val);
       }).style('fill-opacity', 0).on('mouseover.segmentTooltip', state.segmentTooltip.show).on('mouseout.segmentTooltip', state.segmentTooltip.hide);
@@ -1071,11 +1086,8 @@ var timelines = Kapsule({
 
       newSegments.on('mouseover', function () {
         if ('disableHover' in state && state.disableHover) return;
-
         svgUtils.moveToFront()(this);
-
         var hoverEnlarge = state.lineHeight * hoverEnlargeRatio;
-
         d3Selection.select(this).transition().duration(70).attr('x', function (d) {
           return state.xScale(d.timeRange[0]) - hoverEnlarge / 2;
         }).attr('width', function (d) {
@@ -1091,10 +1103,10 @@ var timelines = Kapsule({
         }).attr('y', function (d) {
           return state.yScale(d.group + '+&+' + d.label) - state.lineHeight / 2;
         }).attr('height', state.lineHeight).style('fill-opacity', .8);
+      }).on('click', function (s) {
+        if (state.onSegmentClick) state.onSegmentClick(s);
       });
-
       timelines = timelines.merge(newSegments);
-
       timelines.transition().duration(state.transDuration).attr('x', function (d) {
         return state.xScale(d.timeRange[0]);
       }).attr('width', function (d) {

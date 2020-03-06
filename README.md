@@ -1,6 +1,9 @@
-# Timelines Chart
+Timelines Chart
+==============
 
-[![NPM](https://nodei.co/npm/timelines-chart.png?compact=true)](https://nodei.co/npm/timelines-chart/)
+[![NPM package][npm-img]][npm-url]
+[![Build Size][build-size-img]][build-size-url]
+[![Dependencies][dependencies-img]][dependencies-url]
 
 <p align="center">
      <a href="http://bl.ocks.org/vasturiano/ded69192b8269a78d2d97e24211e64e0"><img width="80%" src="http://gist.github.com/vasturiano/ded69192b8269a78d2d97e24211e64e0/raw/preview.png"></a>
@@ -51,10 +54,11 @@ myChart
 | <b>useUtc</b>([<i>boolean</i>]) | Getter/setter for whether to display time in the local time zone (`false`) or in UTC (`true`). | false |
 | <b>timeFormat</b>([<i>string</i>]) | Getter/setter for the time format to use in tooltips. See [d3-time-format](https://github.com/d3/d3-time-format#locale_format) for available options. | `%Y-%m-%d %-I:%M:%S %p` |
 | <b>xTickFormat</b>([<i>function</i>]) | X axis tick label formatter function, as pass-through to [d3-axis](https://github.com/d3/d3-axis#axis_tickFormat). By default, it uses a [multi-scale time format](https://bl.ocks.org/mbostock/4149176). | |
+| <b>dateMarker</b>([<i>date object</i>]) | Getter/setter for the date marker to show as a vertical line. If a falsy value is used, no marker is shown. | `null` |
 | <b>minSegmentDuration</b>([<i>number</i>]) | Getter/setter for the minimum time duration (in msecs) of a segment in order for it to be shown. | 0 |
 | <b>getNLines</b>() | Returns number of timelines currently visible in the chart. | - |
 | <b>getTotalNLines</b>() | Returns total number of timelines in the chart. | - |
-| <b>zQualitative</b>([<i>boolean</i>]) | Getter/setter for whether the segment data color values are categorical (false) or quantitative (true). This will affect how the color legend is presented, and changing it will automatically toggle the `zColorScale` between defaults. | false |
+| <b>zQualitative</b>([<i>boolean</i>]) | Getter/setter for whether the segment data color values are categorical (true) or quantitative (false). This will affect how the color legend is presented, and changing it will automatically toggle the `zColorScale` between defaults. | false |
 | <b>zColorScale</b>([<i>d3 scale object</i>]) | Getter/setter for the color scale to be used for coloring the segments according to their data values. This object should be a D3 color scale object. | qualitative: `d3.scaleOrdinal(<color-list>)` <br> quantitative: `d3.scaleSequential(<color-interpolator>)` |
 | <b>zDataLabel</b>([<i>string</i>]) | Getter/setter for the units of z data. Used in the tooltip descriptions. | |
 | <b>zScaleLabel</b>([<i>string</i>]) | Getter/setter for the color scale label. Only applicable to quantitative z scales. | |
@@ -71,6 +75,7 @@ myChart
 | <b>getSvg</b>() | Returns graphic (SVG) representation of currently visible chart. | - |
 | <b>enableAnimations</b>([<i>boolean</i>]) | Getter/setter for whether to animate transitions. | true |
 | <b>onLabelClick</b>([<i>function</i>]) | Getter/setter for the callback function for clicking on the Y axis labels. Callback will include the clicked label (if applicable) and group parameter: `onLabelClick(<string>, <string>)`. | `null` |
+| <b>onSegmentClick</b>([<i>function</i>]) | Getter/setter for the callback function for clicking on a segment. Callback will return a segment object: `onSegmentClick(segment)`. | `null` |
 | <b>refresh</b>() | Rerenders chart. | - |
 
 ## Data syntax
@@ -108,3 +113,14 @@ myChart
   (...)
 ]
 ```
+
+## Giving Back
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L398E7PKP47E8&currency_code=USD&source=url) If this project has helped you and you'd like to contribute back, you can always [buy me a ☕](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L398E7PKP47E8&currency_code=USD&source=url)!
+
+[npm-img]: https://img.shields.io/npm/v/timelines-chart.svg
+[npm-url]: https://npmjs.org/package/timelines-chart
+[build-size-img]: https://img.shields.io/bundlephobia/minzip/timelines-chart.svg
+[build-size-url]: https://bundlephobia.com/result?p=timelines-chart
+[dependencies-img]: https://img.shields.io/david/vasturiano/timelines-chart.svg
+[dependencies-url]: https://david-dm.org/vasturiano/timelines-chart

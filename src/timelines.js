@@ -74,8 +74,6 @@ export default Kapsule({
           state.completeFlatData = [];
           state.totalNLines = 0;
 
-          const dateObjs = rawData.length?rawData[0].data[0].data[0].timeRange[0] instanceof Date:false;
-
           for (let i=0, ilen=rawData.length; i<ilen; i++) {
             const group = rawData[i].group;
             state.completeStructData.push({
@@ -88,10 +86,7 @@ export default Kapsule({
                 const completeFlatDataItem = {
                   group: group,
                   label: rawData[i].data[j].label,
-                  timeRange: (dateObjs
-                    ?rawData[i].data[j].data[k].timeRange
-                    :[new Date(rawData[i].data[j].data[k].timeRange[0]), new Date(rawData[i].data[j].data[k].timeRange[1])]
-                  ),
+                  timeRange: rawData[i].data[j].data[k].timeRange.map(d => new Date(d)),
                   val: rawData[i].data[j].data[k].val,
                   labelVal: rawData[i].data[j].data[k][rawData[i].data[j].data[k].hasOwnProperty('labelVal')?'labelVal':'val']
                 };
@@ -131,6 +126,7 @@ export default Kapsule({
       }
     },
     xTickFormat: {},
+    dateMarker: {},
     timeFormat: { default: '%Y-%m-%d %-I:%M:%S %p', triggerUpdate: false },
     zoomX: {  // Which time-range to show (null = min/max)
       default: [null, null],
@@ -175,7 +171,7 @@ export default Kapsule({
     // Callbacks
     onZoom: {}, // When user zooms in / resets zoom. Returns ([startX, endX], [startY, endY])
     onLabelClick: {}, // When user clicks on a group or y label. Returns (group) or (label, group) respectively
-    onSegmentClick: {}
+    onSegmentClick: {} // When user clicks on a segment. Returns (segment object) respectively
   },
 
   methods: {
@@ -335,6 +331,8 @@ export default Kapsule({
     yAxis: null,
     grpAxis: null,
 
+    dateMarkerLine: null,
+
     svg: null,
     graph: null,
     overviewAreaElem: null,
@@ -412,6 +410,8 @@ export default Kapsule({
         );
 
       state.graph = state.svg.append('g');
+      
+      state.dateMarkerLine = state.svg.append('line').attr('class', 'x-axis-date-marker');
 
       if (state.enableOverview) {
         addOverviewArea();
@@ -459,18 +459,15 @@ export default Kapsule({
 
           if (!state.overviewArea || !zoomX) return;
 
-          // Out of overview bounds
+          // Out of overview bounds > extend it
           if (zoomX[0]<state.overviewArea.domainRange()[0] || zoomX[1]>state.overviewArea.domainRange()[1]) {
-            state.overviewArea.update(
-              [
-                new Date(Math.min(zoomX[0], state.overviewArea.domainRange()[0])),
-                new Date(Math.max(zoomX[1], state.overviewArea.domainRange()[1]))
-              ],
-              state.zoomX
-            );
-          } else { // Normal case
-            state.overviewArea.currentSelection(zoomX);
+            state.overviewArea.domainRange([
+              new Date(Math.min(zoomX[0], state.overviewArea.domainRange()[0])),
+              new Date(Math.max(zoomX[1], state.overviewArea.domainRange()[1]))
+            ]);
           }
+
+          state.overviewArea.currentSelection(zoomX);
         });
       }
     }
@@ -838,13 +835,15 @@ export default Kapsule({
         .attr('transform', 'translate(' + state.leftMargin + ',' + state.topMargin + ')');
 
       // X
+      const nXTicks = Math.max(2, Math.min(12, Math.round(state.graphW * 0.012)));
+
       state.xAxis
         .scale(state.xScale)
-        .ticks(Math.round(state.graphW*0.0011))
+        .ticks(nXTicks)
         .tickFormat(state.xTickFormat);
       state.xGrid
         .scale(state.xScale)
-        .ticks(state.xAxis.ticks()[0])
+        .ticks(nXTicks)
         .tickFormat('');
 
       state.svg.select('g.x-axis')
@@ -868,6 +867,23 @@ export default Kapsule({
         .transition().duration(state.transDuration)
         .call(state.xGrid);
 
+      if (
+        state.dateMarker &&
+        state.dateMarker >= state.xScale.domain()[0] &&
+        state.dateMarker <= state.xScale.domain()[1]
+      ) {
+        state.dateMarkerLine
+          .style('display', 'block')
+          .transition().duration(state.transDuration)
+            .attr('x1', state.xScale(state.dateMarker) + state.leftMargin)
+            .attr('x2', state.xScale(state.dateMarker) + state.leftMargin)
+            .attr('y1', state.topMargin + 1)
+            .attr('y2', state.graphH + state.topMargin)
+      } else {
+        state.dateMarkerLine.style('display', 'none');
+      }
+
+      // Y
       const fontVerticalMargin = 0.6;
 
       // Y
@@ -1056,6 +1072,10 @@ export default Kapsule({
             })
             .attr('height', state.lineHeight)
             .style('fill-opacity', .8);
+        })
+        .on('click', function (s) {
+          if (state.onSegmentClick)
+            state.onSegmentClick(s);
         });
 
       timelines = timelines.merge(newSegments);

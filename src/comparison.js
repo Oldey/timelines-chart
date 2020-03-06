@@ -1,6 +1,6 @@
 function alphaNumCmp(a,b){
-  const alist = a.split(/(\d+)/),
-    blist = b.split(/(\d+)/);
+  const alist = a.split('(\d+)'),
+    blist = b.split('(\d+)');
 
   (alist.length && alist[alist.length-1] == '') ? alist.pop() : null; // remove the last element if empty
   (blist.length && blist[blist.length-1] == '') ? blist.pop() : null; // remove the last element if empty
